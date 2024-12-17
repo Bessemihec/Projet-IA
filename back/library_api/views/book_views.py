@@ -7,19 +7,20 @@ from library_api.serializers.book_serializer import BookSerializer
 import jwt
 import json
 
+
 @csrf_exempt
 def book_register(request):
-
     """
     Registers a new book.
-
+    
     Method: POST
     Authorization: Bearer token required
-
+    
     Body parameters:
     - title: str (required)
     - author: str (required)
     - link: str (required)
+    - other fields from the Book model if needed
 
     Returns:
     - 201: Book created successfully
@@ -28,7 +29,6 @@ def book_register(request):
     - 404: User not found
     - 500: Internal server error
     """
-
     if request.method == 'POST':
         token = request.headers.get('Authorization').split(' ')[1]
 
@@ -42,16 +42,40 @@ def book_register(request):
             if not user_data:
                 return JsonResponse({'error': 'User not found'}, status=404)
 
+            # Parse incoming data
             data = json.loads(request.body.decode('utf-8'))
-            title = data.get('title')
-            author = data.get('author')
-            link = data.get('link')
 
-            if not title or not author or not link:
-                return JsonResponse({'error': 'Missing required fields'}, status=400)
+            # Mapping incoming fields to the Book model fields
+            book_data = {
+                'Titre': data.get('title'),
+                'Auteur': data.get('author'),
+                'Code_barre': data.get('code_barre', None),
+                'D_Object': data.get('d_object', None),
+                'CREATION': data.get('creation', None),
+                'MODIF': data.get('modif', None),
+                'Cote': data.get('cote', None),
+                'Inventaire': data.get('inventaire', None),
+                'epn': data.get('epn', None),
+                'Locale': data.get('locale', None),
+                'Staff_Note': data.get('staff_note', None),
+                'Public_Note': data.get('public_note', None),
+                'ISBN_A': data.get('isbn_a', None),
+                'ISBN_Z': data.get('isbn_z', None),
+                'Item_class': data.get('item_class', None),
+                'Specialite': data.get('specialite', None),
+                'Nb_Page': data.get('nb_page', None),
+                'Date_edition': data.get('date_edition', None),
+                'Editeur': data.get('editeur', None),
+                'Prix': data.get('prix', None),
+                'post_by': user_id  # User who posts the book
+            }
+
+            # Check if essential fields are provided
+            if not book_data['Titre'] or not book_data['Auteur']:
+                return JsonResponse({'error': 'Missing required fields (title or author)'}, status=400)
 
             book_repo = BookRepository()
-            book_created = book_repo.create_book(title=title, author=author, link=link, post_by=user_id)
+            book_created = book_repo.create_book(book_data)
 
             if book_created:
                 return JsonResponse({'message': 'Book created successfully'}, status=201)
@@ -71,23 +95,20 @@ def book_register(request):
 
 
 def get_books(request):
-
     """
     Retrieves a list of all books.
-
+    
     Method: GET
-
+    
     Returns:
     - 200: List of books
     - 500: Internal server error
     """
-
     if request.method == 'GET':
         try:
             book_data = BookRepository().get_books()
             serialized_books = [BookSerializer.serialize(book) for book in book_data]
             return JsonResponse(serialized_books, safe=False, status=200)
-            
         except Exception as e:
             return JsonResponse({'error': f'An error occurred: {str(e)}'}, status=500)
     else:
@@ -95,21 +116,19 @@ def get_books(request):
 
 
 def book_info(request, _id):
-
     """
     Retrieves information about a specific book.
-
+    
     Method: GET
-
+    
     Path parameters:
     - _id: str (required)
-
+    
     Returns:
     - 200: Book data
     - 404: Book not found
     - 500: Internal server error
     """
-
     if request.method == 'GET':
         try:
             book_repo = BookRepository()
@@ -123,18 +142,18 @@ def book_info(request, _id):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
+
 @csrf_exempt
 def book_update(request, book_id):
-
     """
     Updates information about a specific book.
-
+    
     Method: PUT
     Authorization: Bearer token required
-
+    
     Path parameters:
     - book_id: str (required)
-
+    
     Body parameters (at least one required):
     - title: str
     - author: str
@@ -148,7 +167,6 @@ def book_update(request, book_id):
     - 404: Book not found
     - 500: Internal server error
     """
-
     if request.method == 'PUT':
         token = request.headers.get('Authorization').split(' ')[1]
         try:
@@ -197,18 +215,19 @@ def book_update(request, book_id):
             return JsonResponse({'error': str(e)}, status=500)
 
     return JsonResponse({'error': 'Invalid HTTP method'}, status=405)
+
+
 @csrf_exempt
 def book_delete(request, book_id):
-
     """
     Deletes a specific book.
-
+    
     Method: DELETE
     Authorization: Bearer token required
-
+    
     Path parameters:
     - book_id: str (required)
-
+    
     Returns:
     - 200: Book deleted successfully
     - 401: Token expired or invalid
@@ -216,7 +235,6 @@ def book_delete(request, book_id):
     - 404: Book not found
     - 500: Internal server error
     """
-    
     if request.method == 'DELETE':
         token = request.headers.get('Authorization').split(' ')[1]
         try:
