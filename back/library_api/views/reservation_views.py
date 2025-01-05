@@ -37,7 +37,8 @@ def create_reservation(request):
             token = token.split(' ')[1]
             # Décoder le token
             payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-            student_id = payload['_id']  # Vous pouvez utiliser l'ID de l'étudiant à partir du payload du token
+            # Utiliser le student_id venant du token (mais on permet d'utiliser un autre student_id dans la requête)
+            # student_id = payload['_id']  # Si nécessaire, on peut l'utiliser plus tard
 
         except jwt.ExpiredSignatureError:
             return JsonResponse({'error': 'Le token a expiré'}, status=401)
@@ -51,19 +52,15 @@ def create_reservation(request):
             data = json.loads(request.body.decode('utf-8'))
             book_id = data.get('book_id')
             duration = data.get('duration')
-            student_id_request = data.get('student_id')
+            student_id_request = data.get('student_id')  # ID de l'étudiant fourni dans la requête
 
             # Vérifiez que tous les champs sont présents
             if not book_id or not duration or not student_id_request:
                 return JsonResponse({'error': 'Champs requis manquants'}, status=400)
 
-            # Si l'ID de l'étudiant dans le token ne correspond pas à l'ID dans les données, c'est une erreur
-            if str(student_id) != str(student_id_request):
-                return JsonResponse({'error': 'L\'ID de l\'étudiant ne correspond pas au token'}, status=403)
-
             # Créer la réservation
             reservation_repo = ReservationRepository()
-            reservation_created = reservation_repo.create_reservation(book_id=book_id, student_id=student_id, duration=duration)
+            reservation_created = reservation_repo.create_reservation(book_id=book_id, student_id=student_id_request, duration=duration)
 
             if reservation_created:
                 return JsonResponse({'message': 'Réservation créée avec succès', 'duration': duration}, status=201)
@@ -76,8 +73,6 @@ def create_reservation(request):
             return JsonResponse({'error': f'Une erreur est survenue : {str(e)}'}, status=500)
 
     return JsonResponse({'error': 'Méthode HTTP invalide'}, status=405)
-
-
 
 def get_reservations(request):
     """
@@ -135,7 +130,8 @@ def update_reservation(request, reservation_id):
     Autorisation: Token Bearer requis
 
     Paramètres du corps :
-    - status: str (obligatoire)  # Par exemple "completed", "pending", ou "in_progress"
+    - status: str (optionnel)  # Par exemple "completed", "pending", ou "in_progress"
+    - duration: str (optionnel)  # Durée de la réservation sous forme de chaîne (ex: "2 hours", "3 days")
 
     Retourne :
     - 200: Réservation mise à jour avec succès
@@ -149,13 +145,14 @@ def update_reservation(request, reservation_id):
 
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-            student_id = payload['_id']  # ID de l'étudiant connecté
-
             data = json.loads(request.body.decode('utf-8'))
-            status = data.get('status')
 
-            if not status:
-                return JsonResponse({'error': 'Le statut est requis'}, status=400)
+            # Récupération des champs optionnels
+            status = data.get('status')
+            duration = data.get('duration')
+
+            if not status and not duration:
+                return JsonResponse({'error': 'Aucun champ à mettre à jour'}, status=400)
 
             reservation_repo = ReservationRepository()
             reservation_data = reservation_repo.get_reservation(reservation_id)
@@ -163,11 +160,19 @@ def update_reservation(request, reservation_id):
             if not reservation_data:
                 return JsonResponse({'error': 'Réservation non trouvée'}, status=404)
 
-            if str(reservation_data['student']) != student_id:
-                return JsonResponse({'error': 'Non autorisé à modifier cette réservation'}, status=403)
+            # Préparer les champs à mettre à jour
+            update_fields = {}
+
+            if status:
+                update_fields['status'] = status
+            if duration:  # Si la durée est modifiée, on met à jour la date de fin
+                update_fields['duration'] = duration
+                # Calculer la nouvelle date de fin en fonction de la nouvelle durée
+                new_end_date = reservation_repo.calculate_end_date(duration)
+                update_fields['date_fin_reservation'] = new_end_date
 
             # Mise à jour de la réservation
-            result = reservation_repo.update_reservation(reservation_id, {'status': status})
+            result = reservation_repo.update_reservation(reservation_id, update_fields)
 
             if result.modified_count > 0:
                 updated_reservation = reservation_repo.get_reservation(reservation_id)
@@ -186,6 +191,9 @@ def update_reservation(request, reservation_id):
             return JsonResponse({'error': f'Une erreur est survenue : {str(e)}'}, status=500)
 
     return JsonResponse({'error': 'Méthode HTTP invalide'}, status=405)
+
+
+
 
 
 @csrf_exempt
@@ -207,7 +215,8 @@ def delete_reservation(request, reservation_id):
 
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-            student_id = payload['_id']  # ID de l'étudiant connecté
+            # On ne vérifie plus l'ID de l'étudiant
+            # student_id = payload['_id']  # ID de l'étudiant connecté
 
             reservation_repo = ReservationRepository()
             reservation_data = reservation_repo.get_reservation(reservation_id)
@@ -215,9 +224,7 @@ def delete_reservation(request, reservation_id):
             if not reservation_data:
                 return JsonResponse({'error': 'Réservation non trouvée'}, status=404)
 
-            if str(reservation_data['student']) != student_id:
-                return JsonResponse({'error': 'Non autorisé à supprimer cette réservation'}, status=403)
-
+            # Suppression de la vérification de l'ID de l'utilisateur
             result = reservation_repo.delete_reservation(reservation_id)
 
             if result.deleted_count > 0:

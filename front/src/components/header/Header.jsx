@@ -4,19 +4,20 @@ import axios from "axios";
 import "./Header.css";
 
 const Header = ({ auth }) => {
-  const [isAdmin, setIsAdmin] = useState(false); // Pour vérifier si l'utilisateur est admin
-  const [loading, setLoading] = useState(true); // Pour gérer l'état de chargement
-  const [error, setError] = useState(null); // Pour gérer les erreurs lors de la récupération des données
+  const [isAdmin, setIsAdmin] = useState(false); // Vérifie si l'utilisateur est admin
+  const [isLibrarian, setIsLibrarian] = useState(false); // Vérifie si l'utilisateur est bibliothécaire
+  const [isStudent, setIsStudent] = useState(false); // Vérifie si l'utilisateur est étudiant
+  const [loading, setLoading] = useState(true); // Gère l'état de chargement
+  const [error, setError] = useState(null); // Gère les erreurs lors de la récupération des données
   const location = useLocation();
 
   const isLoginPage =
     location.pathname === "/login-register" ||
     location.pathname === "/login-register/";
 
-  // Fonction pour décoder le token JWT et récupérer l'ID de l'utilisateur
   const decodeToken = (token) => {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1])); // Décoder le payload du token
+      const payload = JSON.parse(atob(token.split(".")[1])); // Décoder le payload du token
       return payload._id; // Retourner l'ID de l'utilisateur
     } catch (error) {
       console.error("Erreur lors du décodage du token:", error);
@@ -25,16 +26,14 @@ const Header = ({ auth }) => {
   };
 
   useEffect(() => {
-    // Récupérer et décoder le token pour obtenir l'ID de l'utilisateur
     const token = localStorage.getItem("token");
     if (token) {
-      const userId = decodeToken(token); // Utiliser la fonction pour obtenir l'ID
+      const userId = decodeToken(token);
       if (userId) {
-        // Fetch les informations de l'utilisateur en utilisant l'ID
         fetchUserInfo(userId, token);
       }
     } else {
-      setLoading(false); // Si aucun token, terminer le chargement
+      setLoading(false);
     }
   }, []);
 
@@ -45,59 +44,60 @@ const Header = ({ auth }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setIsAdmin(response.data.role === "admin"); // Vérifier si l'utilisateur est admin
-      setLoading(false); // Fin du chargement
+
+      // Vérifie les rôles
+      setIsAdmin(response.data.role === "admin");
+      setIsLibrarian(response.data.role === "bibliothécaire");
+      setIsStudent(response.data.role === "étudiant"); // Vérification si l'utilisateur est étudiant
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching user info:", error);
       setError("Unable to fetch user info or user does not exist.");
-      setLoading(false); // Fin du chargement même en cas d'erreur
+      setLoading(false);
     }
   };
 
-  // Si la page est de connexion ou que les données sont en cours de chargement, ne pas afficher le header
   if (isLoginPage || loading) {
-    return null; // ou vous pouvez afficher un spinner de chargement ici
+    return null; // ou afficher un spinner de chargement ici
   }
 
-  // Si l'utilisateur n'est pas admin, ne pas afficher la liste des utilisateurs
-  if (!isAdmin) {
-    return (
-      <div className="navigate-container">
-        <div className="header-logo">IHEC</div>
-        <Link to="/" className="navigate-button">
-          Home
-        </Link>
-        <Link to="/bookshelf" className="navigate-button">
-          Bookshelf
-        </Link>
-        <Link
-          to={auth ? "/profile" : "/login-register"}
-          className="navigate-button profile-button"
-        >
-          {auth ? "Profile" : "Sign In"}
-        </Link>
-      </div>
-    );
-  }
-
-  // Si l'utilisateur est un admin, on affiche la liste des utilisateurs
   return (
     <div className="navigate-container">
       <div className="header-logo">IHEC</div>
       <Link to="/" className="navigate-button">
-        Home
+        Acceuil
       </Link>
-      <Link to="/userlist" className="navigate-button">
-        User List
-      </Link>
-      <Link to="/bookshelf" className="navigate-button">
-        Bookshelf
-      </Link>
+      {isAdmin && (
+        <>
+          <Link to="/userlist" className="navigate-button">
+            Liste des utilisateurs
+          </Link>
+          <Link to="/admin" className="navigate-button">
+            Admin
+          </Link>
+          <Link to="/addbook" className="navigate-button">
+            Ajouter livre
+          </Link>
+        </>
+      )}
+
+      {isLibrarian && (
+        <Link to="/reservations" className="navigate-button">
+          Reservations
+        </Link>
+      )}
+
+      {isStudent && (
+        <Link to="/myreservations" className="navigate-button">
+          Mes réservations
+        </Link>
+      )}
+
       <Link
         to={auth ? "/profile" : "/login-register"}
         className="navigate-button profile-button"
       >
-        {auth ? "Profile" : "Sign In"}
+        {auth ? "Profile" : "Login"}
       </Link>
     </div>
   );

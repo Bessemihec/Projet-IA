@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './AddStudent.css'; // Fichier de styles CSS
+import './AddStudent.css'; // Import the provided CSS file
 
-const AddStudent = () => {
+const AddUser = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
     university: '',
     speciality: '',
+    role: 'étudiant', // Default role set to "étudiant"
   });
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
@@ -24,47 +25,48 @@ const AddStudent = () => {
     e.preventDefault();
 
     try {
-      // Effectuer une requête POST vers l'endpoint de création d'utilisateur
+      // Send a POST request to create a new user
       await axios.post(
         'http://localhost:8000/register/',
         {
           username: formData.username,
           email: formData.email,
           password: formData.password,
-          university: formData.university,
-          speciality: formData.speciality,
-          role: 'étudiant', // Rôle fixé à "étudiant"
+          university: formData.role !== 'bibliothécaire' ? formData.university : undefined, // Only send university for non-librarians
+          speciality: formData.role !== 'bibliothécaire' ? formData.speciality : undefined, // Only send speciality for non-librarians
+          role: formData.role, // Use the selected role (étudiant or bibliothécaire)
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`, // Ajout du token JWT si nécessaire
+            Authorization: `Bearer ${localStorage.getItem('token')}`, // Include the JWT token
           },
         }
       );
 
-      // Gestion du succès
-      setSuccessMessage('Étudiant ajouté avec succès !');
+      // Success handling
+      setSuccessMessage('Utilisateur ajouté avec succès!');
       setFormData({
         username: '',
         email: '',
         password: '',
         university: '',
         speciality: '',
+        role: 'étudiant', // Reset the role to "étudiant" after success
       });
 
-      // Rediriger vers la liste des utilisateurs après 2 secondes
+      // Redirect after 2 seconds
       setTimeout(() => navigate('/userlist'), 2000);
     } catch (err) {
-      // Gestion des erreurs
+      // Error handling
       setError(
-        err.response?.data?.message || "Une erreur s'est produite lors de l'ajout de l'étudiant."
+        err.response?.data?.message || "Une erreur s'est produite lors de l'ajout de l'utilisateur."
       );
     }
   };
 
   return (
     <div className="add-student-container">
-      <h1>Ajouter un étudiant</h1>
+      <h1>Ajouter un utilisateur</h1>
       {error && <p className="error-message">{error}</p>}
       {successMessage && <p className="success-message">{successMessage}</p>}
 
@@ -93,22 +95,40 @@ const AddStudent = () => {
           placeholder="Mot de passe"
           required
         />
-        <input
-          type="text"
-          name="university"
-          value={formData.university}
+        
+        {/* Role selection dropdown */}
+        <select
+          name="role"
+          value={formData.role}
           onChange={handleChange}
-          placeholder="Université"
           required
-        />
-        <input
-          type="text"
-          name="speciality"
-          value={formData.speciality}
-          onChange={handleChange}
-          placeholder="Spécialité"
-          required
-        />
+        >
+          <option value="étudiant">Étudiant</option>
+          <option value="bibliothécaire">Bibliothécaire</option>
+        </select>
+
+        {/* Université and spécialité inputs only for students */}
+        {formData.role !== 'bibliothécaire' && (
+          <>
+            <input
+              type="text"
+              name="university"
+              value={formData.university}
+              onChange={handleChange}
+              placeholder="Université"
+              required
+            />
+            <input
+              type="text"
+              name="speciality"
+              value={formData.speciality}
+              onChange={handleChange}
+              placeholder="Spécialité"
+              required
+            />
+          </>
+        )}
+
         <button type="submit">Ajouter</button>
         <button type="button" onClick={() => navigate('/userlist')}>
           Annuler
@@ -118,4 +138,4 @@ const AddStudent = () => {
   );
 };
 
-export default AddStudent;
+export default AddUser;

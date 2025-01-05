@@ -12,6 +12,7 @@ import AddStudent from "./pages/users/AddStudent";
 import Home_Admin from "./pages/home/Home_Admin";
 import Book_Admin from "./pages/book/Book_Admin";
 import AddBook from "./pages/book/AddBook";
+import Chatbot from "./components/chatbot/chatbot";
 
 function App() {
   const [auth, setAuth] = useState("");
@@ -39,10 +40,12 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route
               path="/login-register"
-              element={<LoginRegister handleAuth={handleAuth} />} />
+              element={<LoginRegister handleAuth={handleAuth} />}
+            />
             <Route
               path="/profile"
-              element={<Profile handleAuth={handleAuth} />} />
+              element={<Profile handleAuth={handleAuth} />}
+            />
             <Route path="/bookshelf" element={<Bookshelf auth={auth} />} />
 
             <Route path="/:_id" element={<Book />} />
@@ -50,10 +53,12 @@ function App() {
             <Route path="/create" element={<AddStudent />} />
             <Route
               path="/userlist"
-              element={<UsersTable handleAuth={handleAuth} />} />
+              element={<UsersTable handleAuth={handleAuth} />}
+            />
             <Route path="/Admin" element={<Home_Admin />} />
             <Route path="/Admin/:_id" element={<Book_Admin />} />
             <Route path="/AddBook" element={<AddBook />} />
+            <Route path="/chatbot" element={<Chatbot/>} />
           </Routes>
         </div>
       </div>

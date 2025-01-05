@@ -1,6 +1,6 @@
 from django.urls import path # type: ignore
 from library_api.views import book_views, bookshelf_views, user_views, reservation_views
-
+from library_api.views.chatbot_view import ChatbotView 
 # Define the URL patterns for the library API application
 urlpatterns = [
     path('register/', user_views.user_register, name='register'),  # Endpoint for user registration
@@ -31,5 +31,6 @@ urlpatterns = [
     path('reservations/all', reservation_views.get_reservations, name='get_reservations'), # Endpoint to get all reservations
     path('reservation/<str:reservation_id>/', reservation_views.get_reservation, name='get_reservation'), # Endpoint to get details of a specific reservation
     path('reservation/<str:reservation_id>/update/', reservation_views.update_reservation, name='update_reservation'), # Endpoint to update reservation status
-    path('reservation/<str:reservation_id>/delete/', reservation_views.delete_reservation, name='delete_reservation'), # Endpoint to delete a reservation
+    path('reservation/<str:reservation_id>/delete/', reservation_views.delete_reservation, name='delete_reservation'),
+      path('chatbot', ChatbotView.as_view(), name='chatbot'),  # Endpoint to delete a reservation
 ]

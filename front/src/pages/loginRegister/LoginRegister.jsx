@@ -69,17 +69,24 @@ export default function LoginRegister({ handleAuth }) {
   const handleLogin = async () => {
     try {
       if (!email && !qrCode) {
-        setPopupMessage("Veuillez fournir un email et un mot de passe ou un QR code.");
+        setPopupMessage(
+          "Veuillez fournir un email et un mot de passe ou un QR code."
+        );
         setPopupType("error");
         return;
       }
 
       const payload = qrCode ? { qr_code: qrCode } : { email, password };
 
-      const response = await axios.post("http://localhost:8000/login/", payload);
+      const response = await axios.post(
+        "http://localhost:8000/login/",
+        payload
+      );
 
       const { token } = response.data;
       localStorage.setItem("token", token);
+      // Redirection en fonction du rôle
+   
       handleAuth();
       navigate("/");
     } catch (error) {
@@ -151,7 +158,7 @@ export default function LoginRegister({ handleAuth }) {
               >
                 <option value="étudiant">Étudiant</option>
                 <option value="bibliothécaire">Bibliothécaire</option>
-                <option value="admin">Admin</option>
+                
               </select>
               {role === "étudiant" && (
                 <>

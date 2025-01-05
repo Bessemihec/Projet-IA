@@ -2,7 +2,7 @@ import qrcode
 from datetime import datetime, timedelta
 
 class User:
-    def __init__(self, email, username, password, role):
+    def __init__(self, email, username, password, role,qr_code=None):
         """
         Initialise une instance utilisateur.
 
@@ -16,6 +16,7 @@ class User:
         self.username = username
         self.password = password
         self.role = role
+        self.qr_code = qr_code 
 
     def __str__(self):
         """

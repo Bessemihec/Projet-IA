@@ -12,7 +12,6 @@ from base64 import b64encode
 
 
 @csrf_exempt
-
 def user_register(request):
     """
     Registers a new user.
@@ -28,25 +27,26 @@ def user_register(request):
     """
     if request.method == 'POST':
         try:
+            # Désérialiser les données du corps de la requête
             data = UserSerializer.deserialize(request.body.decode('utf-8'))
             email = data.get('email')
             role = data.get('role')
             password = data.get('password')
 
-            # Additional attributes for students
+            # Récupérer les données supplémentaires pour les étudiants
             university = data.get('university') if role == 'étudiant' else None
             speciality = data.get('speciality') if role == 'étudiant' else None
 
             user_repository = UserRepository()
 
-            # Pass university and speciality for students, None for others
+            # Appeler la méthode create_user du repository
             user_created = user_repository.create_user(
                 email=email,
-                username=data.get('username'),  # Assuming 'username' is in the data
+                username=data.get('username'),  # Assurez-vous que 'username' est bien dans les données
                 password=password,
                 role=role,
-                university=university,  # Pass university for students
-                speciality=speciality   # Pass speciality for students
+                university=university,  # Passer university pour les étudiants
+                speciality=speciality    # Passer speciality pour les étudiants
             )
 
             if user_created:

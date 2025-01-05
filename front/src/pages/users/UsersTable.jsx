@@ -46,9 +46,10 @@ const UsersTable = () => {
       const updatedUser = {
         username: currentUser.username, // Ajoutez username à la mise à jour
         email: currentUser.email,
-        university: currentUser.university,
-        speciality: currentUser.speciality,
-        // Ajoutez d'autres champs selon votre modèle de données
+        role: currentUser.role, // Le rôle ne sera pas modifié
+        // Inclure seulement les champs modifiables
+        university: currentUser.role !== 'bibliothécaire' ? currentUser.university : undefined, // Ne pas inclure université et spécialité pour les bibliothécaires
+        speciality: currentUser.role !== 'bibliothécaire' ? currentUser.speciality : undefined,
       };
 
       const response = await axios.put(`http://localhost:8000/users/${currentUser._id}/edit/`, updatedUser, { // Changé le chemin PUT
@@ -79,10 +80,10 @@ const UsersTable = () => {
           }
         });
 
-        // Filtrer les utilisateurs pour ne garder que ceux avec le rôle "étudiant"
-        const students = response.data.users.filter(user => user.role === 'étudiant');
+        // Filtrer les utilisateurs pour ne garder que ceux avec les rôles "étudiant" ou "bibliothécaire"
+        const usersList = response.data.users.filter(user => user.role === 'étudiant' || user.role === 'bibliothécaire');
         
-        setUsers(students); // Stocker seulement les utilisateurs ayant le rôle "étudiant"
+        setUsers(usersList); // Stocker les utilisateurs
       } catch (error) {
         setError('Erreur lors du chargement des utilisateurs');
       } finally {
@@ -98,10 +99,10 @@ const UsersTable = () => {
 
   return (
     <div className="users-table-container">
-      <h1>Liste des étudiants</h1>
+      <h1>Liste des utilisateurs</h1>
       
       {/* Bouton pour naviguer vers la page de création */}
-      <button onClick={() => navigate('/create')}>Ajouter étudiant</button>
+      <button onClick={() => navigate('/create')}>Ajouter utilisateur</button>
 
       {editMode ? (
         <div className="edit-form">
@@ -118,18 +119,28 @@ const UsersTable = () => {
             onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
             placeholder="Email"
           />
-          <input
-            type="text"
-            value={currentUser.university}
-            onChange={(e) => setCurrentUser({ ...currentUser, university: e.target.value })}
-            placeholder="Université"
-          />
-          <input
-            type="text"
-            value={currentUser.speciality}
-            onChange={(e) => setCurrentUser({ ...currentUser, speciality: e.target.value })}
-            placeholder="Spécialité"
-          />
+          
+          {/* Afficher "Université" et "Spécialité" seulement pour les étudiants */}
+          {currentUser.role !== 'bibliothécaire' && (
+            <>
+              <input
+                type="text"
+                value={currentUser.university}
+                onChange={(e) => setCurrentUser({ ...currentUser, university: e.target.value })}
+                placeholder="Université"
+              />
+              <input
+                type="text"
+                value={currentUser.speciality}
+                onChange={(e) => setCurrentUser({ ...currentUser, speciality: e.target.value })}
+                placeholder="Spécialité"
+              />
+            </>
+          )}
+
+          {/* Le rôle est affiché en mode lecture uniquement (non modifiable) */}
+          <p>Rôle: {currentUser.role}</p>
+
           <button onClick={handleSaveEdit}>Sauvegarder</button>
           <button onClick={handleCancelEdit}>Annuler</button>
         </div>
@@ -137,20 +148,22 @@ const UsersTable = () => {
         <table className="users-table">
           <thead>
             <tr>
-              <th>Nom d'utilisateur</th> {/* Nouvelle colonne pour le nom d'utilisateur */}
+              <th>Nom d'utilisateur</th>
               <th>Email</th>
               <th>Université</th>
               <th>Spécialité</th>
+              <th>Rôle</th> {/* Nouvelle colonne pour le rôle */}
               <th>Actions</th> {/* Ajout d'une colonne pour les actions */}
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
               <tr key={user._id}>
-                <td>{user.username}</td> {/* Affichage du nom d'utilisateur */}
+                <td>{user.username}</td>
                 <td>{user.email}</td>
-                <td>{user.university}</td>
-                <td>{user.speciality}</td>
+                <td>{user.role !== 'bibliothécaire' ? user.university : '-'}</td> {/* Affiche "-" pour bibliothécaire */}
+                <td>{user.role !== 'bibliothécaire' ? user.speciality : '-'}</td> {/* Affiche "-" pour bibliothécaire */}
+                <td>{user.role}</td> {/* Affichage du rôle */}
                 <td>
                   {/* Boutons d'action */}
                   <button className="buttonuserlist" onClick={() => handleEdit(user._id)}>Modifier</button>

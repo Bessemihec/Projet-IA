@@ -16,6 +16,7 @@ export default function Profile({ handleAuth }) {
     role: "",
     university: "",
     speciality: "",
+    qrCode: "", // Nouveau champ pour le QR code
   });
 
   const [usernameUpdate, setUsernameUpdate] = useState("");
@@ -36,9 +37,12 @@ export default function Profile({ handleAuth }) {
             },
           });
 
-          // Mettre à jour l'état de l'utilisateur et les champs de mise à jour
-          setUser(response.data);
-          setUsernameUpdate(response.data.username); // Mettre à jour avec les données actuelles
+          // Mettre à jour l'état de l'utilisateur avec le QR code
+          setUser({
+            ...response.data,
+            qrCode: response.data.qr_code || "", // Ajouter qr_code dans le profil si disponible
+          });
+          setUsernameUpdate(response.data.username);
           setUniversityUpdate(response.data.university);
           setSpecialityUpdate(response.data.speciality);
         } else {
@@ -74,26 +78,22 @@ export default function Profile({ handleAuth }) {
 
   const handleProfileUpdate = async () => {
     try {
-      // Validation des champs
       if (!usernameUpdate && !universityUpdate && !specialityUpdate) {
         setPopupMessage("Missing fields");
         setPopupType("error");
         return;
       }
 
-      // Créer un objet avec les champs à mettre à jour
       const data = {
         username: usernameUpdate,
         university: user.role === "étudiant" ? universityUpdate : undefined,
         speciality: user.role === "étudiant" ? specialityUpdate : undefined,
       };
 
-      // Supprimer les champs vides pour éviter de les envoyer
       const cleanedData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
 
-      // Faire la requête PUT pour mettre à jour le profil de l'utilisateur
       const response = await axios.put(
-        `http://localhost:8000/users/${user._id}/edit/`, // URL avec l'ID de l'utilisateur
+        `http://localhost:8000/users/${user._id}/edit/`,
         cleanedData,
         {
           headers: {
@@ -103,13 +103,11 @@ export default function Profile({ handleAuth }) {
       );
 
       if (response.status === 200) {
-        // Mettre à jour l'état avec les nouvelles données (pas seulement réinitialiser)
         setUser((prevUser) => ({
           ...prevUser,
-          ...cleanedData, // Mettre à jour les propriétés spécifiques
+          ...cleanedData,
         }));
 
-        // Mettre à jour les champs de mise à jour pour qu'ils affichent les nouvelles valeurs
         setUsernameUpdate(response.data.username);
         setUniversityUpdate(response.data.university);
         setSpecialityUpdate(response.data.speciality);
@@ -161,7 +159,6 @@ export default function Profile({ handleAuth }) {
             <p className="profile-email">{user.email}</p>
             <Button dark={false} onClick={handleLogout} text={"Logout"} />
           </div>
-          {/* Affichage conditionnel pour les étudiants */}
           {user.role === "étudiant" && (
             <div className="student-info">
               <p><strong>Spécialité :</strong> {user.speciality}</p>
@@ -177,31 +174,41 @@ export default function Profile({ handleAuth }) {
                 onChange={handleUsernameChange}
                 placeholder={"Username"}
                 type={"text"}
-                value={usernameUpdate}  // Afficher la valeur actuelle de username
+                value={usernameUpdate}
               />
-              {/* Affichage des champs University et Speciality uniquement pour les étudiants */}
               {user.role === "étudiant" && (
                 <>
-                <TextInput
+                  <TextInput
                     name="speciality"
                     onChange={handleSpecialityChange}
                     placeholder={"Speciality"}
                     type={"text"}
-                    value={specialityUpdate}  // Afficher la valeur actuelle de speciality
+                    value={specialityUpdate}
                   />
                   <TextInput
                     name="university"
                     onChange={handleUniversityChange}
                     placeholder={"University"}
                     type={"text"}
-                    value={universityUpdate}  // Afficher la valeur actuelle de university
+                    value={universityUpdate}
                   />
-                  
                 </>
               )}
               <Button dark={true} text={"Save"} onClick={handleProfileUpdate} />
             </div>
           </div>
+
+          {/* Affichage du QR code si disponible */}
+          {user.qrCode && (
+            <div className="qr-code-container">
+              <h3>Your QR Code:</h3>
+              <img
+                src={`data:image/png;base64,${user.qrCode}`}
+                alt="QR Code"
+                className="qr-code-image"
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div
@@ -224,7 +231,6 @@ export default function Profile({ handleAuth }) {
         <p onClick={() => setShowDeleteModal(true)}>Delete your account?</p>
       </div>
 
-      {/* Modal de confirmation pour suppression */}
       <Modal
         show={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}

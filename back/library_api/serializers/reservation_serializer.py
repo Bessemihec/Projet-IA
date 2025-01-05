@@ -14,4 +14,5 @@ class ReservationSerializer:
             'status': reservation['status'],  # Statut de la réservation
             'date_reservation': reservation['date_reservation'].isoformat(),  # Date sous format ISO 8601
             'duration': reservation['duration'],  # Durée de la réservation en tant que chaîne
+            'date_fin_reservation': reservation['date_fin_reservation'].isoformat()  # Date de fin sous format ISO 8601
         }

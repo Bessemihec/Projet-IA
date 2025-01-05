@@ -43,3 +43,14 @@
   font-size: large; /* Agrandir le texte */
   margin-top: 10px; /* Espacement supplémentaire */
 }
+
+.qr-code-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.qr-code-image {
+  width: 200px; /* Ajustez la taille selon vos besoins */
+  height: 200px;
+  margin-top: 10px;
+}

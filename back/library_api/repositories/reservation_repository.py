@@ -1,6 +1,6 @@
 from library_project.settings import *
 from bson.objectid import ObjectId
-from datetime import datetime
+from datetime import datetime,timedelta
 
 class ReservationRepository:
     def __init__(self):
@@ -11,6 +11,26 @@ class ReservationRepository:
         self.db = db
         self.collection = self.db['reservations']
 
+    def calculate_end_date(self, duration_str):
+        """
+        Calcule la date de fin en fonction de la durée sous forme de chaîne.
+        
+        Args:
+            duration_str (str): La durée de la réservation sous forme de chaîne (ex: "2 hours", "3 days").
+        
+        Returns:
+            datetime: La date de fin calculée.
+        """
+        duration_parts = duration_str.split()
+        if len(duration_parts) == 2:
+            value = int(duration_parts[0])
+            unit = duration_parts[1].lower()
+            if unit in ['hour', 'hours']:
+                return datetime.now() + timedelta(hours=value)
+            elif unit in ['day', 'days']:
+                return datetime.now() + timedelta(days=value)
+        return datetime.now()  # Retourne l'heure actuelle si la durée est invalide
+
     def create_reservation(self, book_id, student_id, duration):
         """
         Crée une nouvelle réservation dans la base de données.
@@ -18,17 +38,21 @@ class ReservationRepository:
         Args:
             book_id (str): L'ID du livre réservé.
             student_id (str): L'ID de l'étudiant qui fait la réservation.
-            duration (timedelta): La durée de la réservation.
+            duration (str): La durée de la réservation sous forme de chaîne (ex: "2 hours", "1 day").
         
         Returns:
             bool: True si la réservation a été créée avec succès, False sinon.
         """
+        # Calculer la date de fin de réservation
+        date_fin_reservation = self.calculate_end_date(duration)
+
         reservation_data = {
             'book': ObjectId(book_id),
             'student': ObjectId(student_id),
-            'status': 'pending',  # Par défaut, la réservation est en attente.
+            'status': 'En cours',  # Par défaut, la réservation est en attente.
             'date_reservation': datetime.now(),
-            'duration': duration
+            'duration': duration,
+            'date_fin_reservation': date_fin_reservation
         }
         result = self.collection.insert_one(reservation_data)
         return result.acknowledged

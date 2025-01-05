@@ -14,9 +14,9 @@ class Reservation(models.Model):
     student = models.ForeignKey('User', on_delete=models.CASCADE)  # Associer à User, mais ce sera un Student
 
     # Autres champs
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='En cours')
     date_reservation = models.DateTimeField(default=datetime.now)
     duration = models.CharField(max_length=100)  # Changer en CharField pour une durée sous forme de chaîne
-
+    date_fin_reservation = models.DateTimeField(null=True, blank=True)
     def __str__(self):
         return f"Reservation for {self.student.username} on {self.book.title} - Status: {self.status}"
