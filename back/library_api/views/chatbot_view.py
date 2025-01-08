@@ -7,7 +7,8 @@ import openai
 import json
 import os
 
-
+# Charger l'API key pour OpenAI
+openai.api_key = "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"  # Ajoutez OPENAI_API_KEY dans votre fichier .env
 def is_booking_question(user_query):
     """
     Vérifie si la question de l'utilisateur est liée à la réservation de livres.

@@ -32,5 +32,5 @@ urlpatterns = [
     path('reservation/<str:reservation_id>/', reservation_views.get_reservation, name='get_reservation'), # Endpoint to get details of a specific reservation
     path('reservation/<str:reservation_id>/update/', reservation_views.update_reservation, name='update_reservation'), # Endpoint to update reservation status
     path('reservation/<str:reservation_id>/delete/', reservation_views.delete_reservation, name='delete_reservation'),
-      path('chatbot', ChatbotView.as_view(), name='chatbot'),  # Endpoint to delete a reservation
+      path('chatbot', ChatbotView.as_view(), name='chatbot'),  
 ]
